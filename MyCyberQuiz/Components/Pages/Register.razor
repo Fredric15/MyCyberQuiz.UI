@@ -1,0 +1,111 @@
+﻿@page "/register"
+@using MyCyberQuiz.Shared.DTOs
+@using MyCyberQuiz.UI.Services
+@inject NavigationManager NavigationManager
+@inject IFrontendAuthService AuthService
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <h3 class="text-center mb-4">Skapa ett konto</h3>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @errorMessage
+                        </div>
+                    }
+
+                    @if (isSuccess)
+                    {
+                        <div class="alert alert-success text-center" role="alert">
+                            <h4 class="alert-heading">Konto skapat! 🎉</h4>
+                            <p>Du kan nu logga in med dina nya uppgifter.</p>
+                            <button class="btn btn-success mt-3" @onclick='() => NavigationManager.NavigateTo("/login")'>
+                                Gå till inloggning
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <EditForm Model="registerModel" OnValidSubmit="HandleRegister" FormName="RegisterForm">
+                            <DataAnnotationsValidator />
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">E-postadress</label>
+                                <InputText id="email" class="form-control" @bind-Value="registerModel.Email" placeholder="namn@exempel.se" />
+                                <ValidationMessage For="() => registerModel.Email" class="text-danger small" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Lösenord</label>
+                                <InputText type="password" id="password" class="form-control" @bind-Value="registerModel.Password" placeholder="Minst 6 tecken, stor bokstav & siffra" />
+                                <ValidationMessage For="() => registerModel.Password" class="text-danger small" />
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="confirmPassword" class="form-label">Bekräfta lösenord</label>
+                                <InputText type="password" id="confirmPassword" class="form-control" @bind-Value="registerModel.ConfirmPassword" placeholder="Skriv lösenordet igen" />
+                                <ValidationMessage For="() => registerModel.ConfirmPassword" class="text-danger small" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-2" disabled="@isLoading">
+                                @if (isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    <span> Skapar konto...</span>
+                                }
+                                else
+                                {
+                                    <span>Registrera dig</span>
+                                }
+                            </button>
+                        </EditForm>
+
+                        <div class="text-center mt-4">
+                            <p class="small">Har du redan ett konto? <a href="/login">Logga in här</a></p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterDto registerModel = new();
+    private string? errorMessage;
+    private bool isSuccess = false;
+    private bool isLoading = false;
+
+    private async Task HandleRegister()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var result = await AuthService.RegisterAsync(registerModel);
+
+            if (result.IsSuccessful)
+            {
+                isSuccess = true;
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage;
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Kunde inte nå servern. Kontrollera din anslutning.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
