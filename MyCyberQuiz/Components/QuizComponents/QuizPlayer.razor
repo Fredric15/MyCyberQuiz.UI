@@ -130,6 +130,15 @@
     protected override async Task OnInitializedAsync()
     {
         quiz = await FrontendQuizService.GetQuizByIdAsync(SubCategoryId);
+
+        if (quiz != null)
+        {
+            foreach (var question in quiz.Questions)
+            {
+                //Här shufflear vi alternativen för varje fråga så att de inte alltid ligger i samma ordning
+                question.Options = question.Options.OrderBy(_ => Guid.NewGuid()).ToList();
+            }
+        }
     }
 
     private void SelectOption(int questionId, int optionId)

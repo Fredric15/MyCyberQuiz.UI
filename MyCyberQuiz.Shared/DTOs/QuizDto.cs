@@ -9,8 +9,13 @@ namespace MyCyberQuiz.Shared.DTOs
     public record QuizDetailsDto(int Id, string Title, string Description, List<QuestionDto> Questions);
 
 
-    public record QuestionDto(int Id, string Text, List<OptionDto> Options);
-
+    //public record QuestionDto(int Id, string Text, List<OptionDto> Options);
+    public record QuestionDto
+    { 
+        public int Id { get; set; } 
+        public string Text {  get; set; } 
+        public List<OptionDto> Options { get; set; }
+    }
     // Vi skickar INTE med IsCorrect till klienten för att förhindra fusk
     public record OptionDto(int Id, string Text);
 
