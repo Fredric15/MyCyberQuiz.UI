@@ -1,0 +1,13 @@
+@MyCyberQuiz.API_HostAddress = http://localhost:5280
+
+GET {{MyCyberQuiz.API_HostAddress}}/api/quiz/menu
+
+Accept: application/json
+
+###
+
+GET {{MyCyberQuiz.API_HostAddress}}/api/quiz/1
+
+Accept: application/json
+
+###

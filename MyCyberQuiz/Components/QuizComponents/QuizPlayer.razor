@@ -1,0 +1,230 @@
+﻿@page "/quizcomponents/{SubCategoryId:int}"
+@using MyCyberQuiz.Shared.DTOs
+@using MyCyberQuiz.UI.Services
+@inject IFrontendQuizService FrontendQuizService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    @if (result != null)
+    {
+        <div class="card shadow-sm mx-auto text-center" style="max-width: 600px;">
+            <div class="card-body py-5">
+                <h2 class="mb-4">Quiz Slutfört!</h2>
+
+                @if (result.Passed)
+                {
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    <h3 class="text-success mt-3">Godkänd!</h3>
+                }
+                else
+                {
+                    <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+                    <h3 class="text-danger mt-3">Inte riktigt ända fram...</h3>
+                }
+
+                <p class="lead mt-4">
+                    Du fick <strong>@result.CorrectAnswers</strong> av <strong>@result.TotalQuestions</strong> rätt.
+                </p>
+
+                <p class="text-muted">@result.Message</p>
+
+                <div class="mt-5">
+                    <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/")'>
+                        Tillbaka till menyn
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+    else if (quiz == null)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p>Laddar quiz...</p>
+        </div>
+    }
+    else if (currentQuestionIndex < quiz.Questions.Count)
+    {
+        <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+            <div class="card-header bg-primary text-white d-flex justify-content-between">
+                <span>Fråga @(currentQuestionIndex + 1) av @quiz.Questions.Count</span>
+                <span>@quiz.Title</span>
+            </div>
+
+            <div class="card-body">
+                <h4 class="card-title mb-4">@currentQuestion.Text</h4>
+
+                <div class="list-group">
+                    @foreach (var option in currentQuestion.Options)
+                    {
+                        <button type="button"
+                                class="list-group-item list-group-item-action @GetOptionClass(option)"
+                                @onclick="() => SelectOption(currentQuestion.Id, option.Id)"
+                                disabled="@hasAnsweredCurrent">
+                            @option.Text
+                        </button>
+                    }
+                </div>
+
+                @if (hasAnsweredCurrent)
+                {
+                    <div class="mt-4 p-3 rounded @(isCorrect ? "bg-success text-white" : "bg-danger text-white")">
+                        @if (isCorrect)
+                        {
+                            <h5 class="mb-0"><i class="bi bi-check-circle-fill me-2"></i> Rätt svar!</h5>
+                        }
+                        else
+                        {
+                            <h5 class="mb-1"><i class="bi bi-x-circle-fill me-2"></i> Tyvärr, fel svar.</h5>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="card-footer d-flex justify-content-end">
+                @if (!hasAnsweredCurrent)
+                {
+                    <button class="btn btn-success" @onclick="CheckAnswer" disabled="@(!IsCurrentQuestionAnswered())">
+                        Svara
+                    </button>
+                }
+                else
+                {
+                    @if (currentQuestionIndex < quiz.Questions.Count - 1)
+                    {
+                        <button class="btn btn-primary" @onclick="NextQuestion">
+                            Nästa fråga
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-success" @onclick="SubmitQuiz">
+                            Slutför Quiz och se resultat
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public int SubCategoryId { get; set; }
+
+    private QuizDetailsDto quiz;
+    private int currentQuestionIndex = 0;
+    private QuestionDto currentQuestion => quiz.Questions[currentQuestionIndex];
+    private Dictionary<int, int> userAnswers = new();
+    private QuizResultDto? result;
+
+    // --- NYA VARIABLER FÖR FEEDBACK ---
+    private bool hasAnsweredCurrent = false;
+    private bool isCorrect = false;
+
+    // Sparar ID:t på rätt svar om användaren gissar fel, så vi kan visa vilket som var rätt
+    private int? correctOptionIdFromServer;
+    private string? correctAnswerTextFromServer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        quiz = await FrontendQuizService.GetQuizByIdAsync(SubCategoryId);
+    }
+
+    private void SelectOption(int questionId, int optionId)
+    {
+        if (userAnswers.ContainsKey(questionId))
+            userAnswers[questionId] = optionId;
+        else
+            userAnswers.Add(questionId, optionId);
+    }
+
+    // Vi byter ut dynamic mot din faktiska OptionDto (byt namn om din klass heter något annat)
+    private string GetOptionClass(OptionDto option)
+    {
+        // 1. Innan de har klickat på "Svara": Visa bara blå markering på det de klickat på
+        if (!hasAnsweredCurrent)
+        {
+            return userAnswers.Values.Contains(option.Id) ? "active" : "";
+        }
+
+        // 2. Efter de har svarat: Dags att sätta färger!
+
+        // Om de svarade rätt, och detta är det valda alternativet -> Grönt
+        if (isCorrect && userAnswers.Values.Contains(option.Id))
+        {
+            return "bg-success text-white border-success";
+        }
+
+        // Om de svarade fel, men detta är det RÄTTA alternativet enligt API:et -> Grönt
+        if (!isCorrect && option.Id == correctOptionIdFromServer)
+        {
+            return "bg-success text-white border-success";
+        }
+
+        // Om de svarade fel, och detta är alternativet de klickade på -> Rött
+        if (!isCorrect && userAnswers.Values.Contains(option.Id))
+        {
+            return "bg-danger text-white border-danger";
+        }
+
+        // Alla andra alternativ som man varken klickat på eller som är rätt -> Gråa
+        return "text-muted";
+    }
+
+    private bool IsCurrentQuestionAnswered() =>
+        quiz != null && userAnswers.ContainsKey(quiz.Questions[currentQuestionIndex].Id);
+
+    private bool IsAllQuestionsAnswered() =>
+        quiz != null && userAnswers.Count == quiz.Questions.Count;
+
+    private async Task CheckAnswer()
+    {
+        var currentQuestion = quiz.Questions[currentQuestionIndex];
+        var selectedOptionId = userAnswers[currentQuestion.Id];
+
+        // HÄR ringer vi API:et och frågar! (Vi sätter upp detta i nästa steg)
+        var feedback = await FrontendQuizService.CheckSingleAnswerAsync(currentQuestion.Id, selectedOptionId);
+
+        isCorrect = feedback.IsCorrect;
+
+        if (!isCorrect)
+        {
+            // Om fel, spara vad som faktiskt var rätt så UI:t kan måla det grönt och skriva ut det
+            correctOptionIdFromServer = feedback.CorrectOptionId;
+            correctAnswerTextFromServer = feedback.CorrectAnswerText;
+        }
+
+        hasAnsweredCurrent = true;
+    }
+
+    private void NextQuestion()
+    {
+        // Nollställ feedback-variablerna inför nästa fråga
+        hasAnsweredCurrent = false;
+        correctOptionIdFromServer = null;
+        correctAnswerTextFromServer = null;
+
+        currentQuestionIndex++;
+    }
+
+    private async Task SubmitQuiz()
+    {
+        var submission = new SubmitQuizDto(
+            quiz!.Id,
+            SubCategoryId,
+            userAnswers.Select(a => new UserAnswerDto(a.Key, a.Value)).ToList()
+        );
+
+        try
+        {
+            result = await FrontendQuizService.SubmitQuizAsync(submission);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ett fel uppstod: {ex.Message}");
+        }
+    }
+
+}

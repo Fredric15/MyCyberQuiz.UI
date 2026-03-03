@@ -1,0 +1,111 @@
+﻿@page "/"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
+@using MyCyberQuiz.Shared.DTOs
+@using MyCyberQuiz.UI.Services
+@inject NavigationManager NavigationManager
+@inject IFrontendQuizService QuizService
+@rendermode InteractiveServer
+
+
+
+
+<div class="container mt-5">
+    <h2 class="mb-4">Välj ett Quiz</h2>
+
+    @* Visar en laddningssnurra medan vi väntar på API:et *@
+    @if (categories == null)
+    {
+        <div class="d-flex justify-content-center mt-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Laddar...</span>
+            </div>
+        </div>
+    }
+    else if (!categories.Any())
+    {
+        <p>Inga kategorier hittades i databasen.</p>
+    }
+    else
+    {
+        <div class="accordion shadow-sm" id="categoryAccordion">
+
+            @* Yttre loop: Loopar igenom alla kategorier *@
+            @foreach (var category in categories)
+            {
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading-@category.Id">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@category.Id" aria-expanded="false" aria-controls="collapse-@category.Id">
+                            <strong>@category.Name</strong>
+                        </button>
+                    </h2>
+
+                    <div id="collapse-@category.Id" class="accordion-collapse collapse" aria-labelledby="heading-@category.Id" data-bs-parent="#categoryAccordion">
+                        <div class="accordion-body bg-light">
+                            <div class="row g-4">
+
+                                @* Inre loop: Loopar igenom underkategorierna för den aktuella kategorin *@
+                                @foreach (var subCategory in category.SubCategories)
+                                {
+                                    <div class="col-md-4">
+                                        <div class="card h-100 border-0 shadow-sm hover-effect">
+                                            <div class="card-body d-flex flex-column">
+
+                                                @if (subCategory.IsLocked)
+                                                {
+                                                    <h5 class="card-title text-muted">
+                                                        <i class="bi bi-lock-fill text-secondary me-2"></i> @subCategory.Name
+                                                    </h5>
+                                                    <button class="btn btn-secondary mt-auto" disabled>
+                                                        Låst
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <h5 class="card-title text-primary">@subCategory.Name</h5>
+                                                    <button class="btn btn-outline-primary mt-auto" @onclick="() => StartQuiz(subCategory.Id)">
+                                                        <i class="bi bi-play-circle me-2"></i> Starta Quiz
+                                                    </button>
+                                                }
+                                                @* <h5 class="card-title text-primary">@subCategory.Name</h5>
+                                                <button class="btn btn-outline-primary mt-auto" @onclick="() => StartQuiz(subCategory.Id)">
+                                                    <i class="bi bi-play-circle me-2"></i> Starta Quiz
+                                                </button> *@
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<CategoryDto> categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            categories = await QuizService.GetQuizMenuAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Fel vid hämtning av kategorier: {ex.Message}");
+            categories = new List<CategoryDto>(); // Visa ett tomt state istället för att krascha
+        }
+    }
+
+    private void StartQuiz(int subCategoryId)
+    {
+        NavigationManager.NavigateTo($"/QuizComponents/{subCategoryId}");
+    }
+
+
+
+}

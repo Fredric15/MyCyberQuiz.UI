@@ -1,0 +1,74 @@
+﻿@page "/login"
+@using MyCyberQuiz.BLL.Services
+@using MyCyberQuiz.Shared.DTOs
+@using MyCyberQuiz.UI.Services
+@inject NavigationManager NavigationManager
+@inject IFrontendAuthService AuthService
+
+
+
+<PageTitle>Logga in - MyCyberQuiz</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">Logga in</h3>
+
+                    @* Visar felmeddelande om inloggningen misslyckas *@
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @errorMessage
+                        </div>
+                    }
+
+                    @* Blazors inbyggda formulärhantering *@
+                    <EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label class="form-label">E-postadress</label>
+                            <InputText @bind-Value="loginModel.Email" class="form-control" placeholder="namn@epost.se" />
+                            <ValidationMessage For="@(() => loginModel.Email)" class="text-danger" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Lösenord</label>
+                            <InputText @bind-Value="loginModel.Password" type="password" class="form-control" placeholder="******" />
+                            <ValidationMessage For="@(() => loginModel.Password)" class="text-danger" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mt-3">Logga in</button>
+                    </EditForm>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginDto loginModel = new LoginDto();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        errorMessage = null;
+
+        // Anropa vår Frontend-tjänst som skickar datan till API:et
+        var result = await AuthService.LoginAsync(loginModel);
+
+        if (result.IsSuccessful)
+        {
+            // Om inloggningen lyckas, skicka användaren till startsidan
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            // Visa felmeddelandet (t.ex. "Ogiltig e-post eller lösenord")
+            errorMessage = result.ErrorMessage ?? "Ett okänt fel inträffade.";
+        }
+    }
+}
