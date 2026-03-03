@@ -25,7 +25,7 @@ namespace MyCyberQuiz.UI.Services
                 // Ta emot svaret från API
                 var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
 
-                // Vid success, spara token-strängen i ProtectedSessionStorage i CustomAuthStateProvider
+                // Vid success, spara token-strängen i ProtectedSessionStorage
                 if (result != null && result.IsSuccessful && !string.IsNullOrWhiteSpace(result.Token))
                 {
                     var customProvider = (CustomAuthStateProvider)_authStateProvider;
@@ -46,6 +46,15 @@ namespace MyCyberQuiz.UI.Services
             var customProvider = (CustomAuthStateProvider)_authStateProvider;
             await customProvider.MarkUserAsLoggedOut();
         }
-    
+
+        public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
+        {
+            // Skickar DTO:n till vår nya endpoint i API:et
+            var response = await _httpClient.PostAsJsonAsync("api/auth/register", registerDto);
+
+            var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+
+            return result ?? new AuthResponseDto(false, "Ett oväntat fel uppstod.", null);
+        }
     }
 }

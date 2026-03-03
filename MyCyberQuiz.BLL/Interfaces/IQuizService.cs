@@ -11,7 +11,6 @@ namespace MyCyberQuiz.BLL.Interfaces
         Task<IEnumerable<CategoryDto>> GetMenuCategoriesAsync();
         Task<QuizDetailsDto> GetQuizByIdAsync(int subCategoryId);
         Task<QuizResultDto> SubmitQuizAsync(SubmitQuizDto submission);
-
         Task<AnswerFeedbackDto> CheckAnswerAsync(int questionId, int selectedOptionId);
     }
 }

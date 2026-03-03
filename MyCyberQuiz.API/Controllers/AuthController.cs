@@ -30,5 +30,23 @@ namespace MyCyberQuiz.API.Controllers
             // 3. Om det misslyckades (fel lösenord/epost), returnera 401 Unauthorized
             return Unauthorized(result);
         }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthResponseDto(false, "Ogiltig data skickad.", null));
+            }
+
+            var result = await _authService.RegisterAsync(registerDto);
+
+            if (!result.IsSuccessful)
+            {
+                return BadRequest(result); // Returnerar 400 Bad Request med felmeddelandet
+            }
+
+            return Ok(result); // Returnerar 200 OK om registreringen lyckades
+        }
     }
 }

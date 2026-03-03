@@ -52,6 +52,36 @@ namespace MyCyberQuiz.BLL.Services
             }
             return new AuthResponseDto(false, "Ogiltig e-post eller lösenord", null);
         }
-        
+
+        public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
+        {
+
+            var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
+            if (existingUser != null)
+            {
+                return new AuthResponseDto(false, "En användare med denna e-postadress finns redan.", null);
+            }
+
+            var NewUser = new ApplicationUser
+            {
+                UserName = registerDto.Email,
+                Email = registerDto.Email
+            };
+            
+            var result = await _userManager.CreateAsync(NewUser, registerDto.Password);
+
+            if (!result.Succeeded)
+            {
+                // Om det misslyckas (t.ex. för svagt lösenord), plocka ut felmeddelandena
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return new AuthResponseDto(false, errors, null);
+            }
+
+            if (result.Succeeded)
+            {
+                return new AuthResponseDto(true, null, null);
+            }
+            return new AuthResponseDto(false, "Registrering misslyckades", null);
+        }
     }
 }
