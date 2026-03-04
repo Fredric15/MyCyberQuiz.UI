@@ -100,11 +100,12 @@ namespace MyCyberQuiz.BLL.Services
                 quiz.Id,
                 quiz.Text,
                 quiz.Description,
-                quiz.Questions.Select(q => new QuestionDto(
-                    q.Id,
-                    q.Text,
-                    q.Options.Select(o => new OptionDto(o.Id, o.Text)).ToList()
-                )).ToList()
+                quiz.Questions.Select(q => new QuestionDto
+                {
+                    Id = q.Id,
+                    Text = q.Text,
+                    Options = q.Options.Select(o => new OptionDto(o.Id, o.Text)).ToList()
+                }).ToList()
             );
         }
 
