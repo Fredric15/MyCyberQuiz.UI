@@ -7,7 +7,7 @@ namespace MyCyberQuiz.UI.Auth
 {
     public class CustomAuthStateProvider : AuthenticationStateProvider
     {
-        //Alternativ 1: Spara token i session-minnet (ProtectedSessionStorage)
+        //Alternativ 1:
         //ProtectedSessionStorage sparar Jwt-token i session-minnet,
         //Vilket innebär att den raderas när webbläsaren eller fliken stängs
         private readonly ProtectedSessionStorage _sessionStorage;

@@ -8,9 +8,10 @@ namespace MyCyberQuiz.BLL.Interfaces
     public interface IQuizService
     {
         // En metod för att hämta all data vi behöver till menyn
-        Task<IEnumerable<CategoryDto>> GetMenuCategoriesAsync();
+        Task<IEnumerable<CategoryDto>> GetMenuCategoriesAsync(string userId);
         Task<QuizDetailsDto> GetQuizByIdAsync(int subCategoryId);
-        Task<QuizResultDto> SubmitQuizAsync(SubmitQuizDto submission);
+        Task<QuizResultDto> SubmitQuizAsync(SubmitQuizDto submission, string userId);
         Task<AnswerFeedbackDto> CheckAnswerAsync(int questionId, int selectedOptionId);
+        Task<UserProfileDto?> GetUserProfileAsync(string userId);
     }
 }

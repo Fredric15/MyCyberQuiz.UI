@@ -16,32 +16,28 @@ namespace MyCyberQuiz.BLL.Services
         private readonly IQuizRepository _quizRepository;
         private readonly IUserProgressRepository _userProgressRepository; // För att kunna spara användarprogress i framtiden
         private readonly IUserScoreRepository _userScoreRepository; // För att kunna spara användarpoäng i framtiden
-        private readonly IHttpContextAccessor _httpContextAccessor; // För att kunna hämta aktuell användare i framtiden
         private readonly UserManager<ApplicationUser> _userManager;
         
 
-        public QuizService(IQuizRepository quizRepository, UserManager<ApplicationUser> userManager, IHttpContextAccessor httpContextAccessor, IUserProgressRepository userProgressRepository, IUserScoreRepository userScoreRepository)
+        public QuizService(IQuizRepository quizRepository, UserManager<ApplicationUser> userManager, IUserProgressRepository userProgressRepository, IUserScoreRepository userScoreRepository)
         {
             _quizRepository = quizRepository;
             _userManager = userManager;
-            _httpContextAccessor = httpContextAccessor;
             _userProgressRepository = userProgressRepository;
             _userScoreRepository = userScoreRepository;
         }
-        public async Task<IEnumerable<CategoryDto>> GetMenuCategoriesAsync()
+        public async Task<IEnumerable<CategoryDto>> GetMenuCategoriesAsync(string userId)
         {
-            // 1. Hämta inloggad användares ID
-            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            var categoryDtos = new List<CategoryDto>();
+            
+            // 1. Hämta användarens alla framsteg - om inga framsteg, skapa ny UserProgressModel
 
-            // 2. Hämta användarens alla framsteg (kräver att du lägger till GetAllProgressForUserAsync i ditt repository)
             var userProgress = string.IsNullOrEmpty(userId)
                 ? new List<UserProgressModel>()
                 : await _userProgressRepository.GetUserProgressByUserIdAsync(userId);
 
-            // 3. Hämta alla kategorier och underkategorier
+            // 2. Hämta alla kategorier och underkategorier
             var categories = await _quizRepository.GetAllCategoriesWithSubCAsync();
-
-            var categoryDtos = new List<CategoryDto>();
 
             foreach (var category in categories)
             {
@@ -70,8 +66,8 @@ namespace MyCyberQuiz.BLL.Services
                         sc.Id,
                         sc.Name,
                         sc.Description,
-                        isLocked, // Din nya egenskap
-                        sc.Order  // Skicka med ordern för frontend-sortering
+                        isLocked,
+                        sc.Order
                     ));
                 }
 
@@ -109,7 +105,7 @@ namespace MyCyberQuiz.BLL.Services
             );
         }
 
-        public async Task<QuizResultDto> SubmitQuizAsync(SubmitQuizDto submission)
+        public async Task<QuizResultDto> SubmitQuizAsync(SubmitQuizDto submission, string userId)
         {
 
             // 1. Hämta hela quizet (inklusive facit) från databasen
@@ -148,8 +144,6 @@ namespace MyCyberQuiz.BLL.Services
             // 3. Räkna ut om användaren blev godkänd (t.ex. minst 80% rätt)
             double scorePercentage = (double)correctAnswers / totalQuestions;
             bool passed = scorePercentage >= 0.8;
-
-            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
 
             // Spara poängen i databasen
             UserScoreModel scoreModel = new UserScoreModel
@@ -239,6 +233,49 @@ namespace MyCyberQuiz.BLL.Services
 
             // 4. Skicka tillbaka domen!
             return new AnswerFeedbackDto(isCorrect, correctOption.Id, correctOption.Text);
+        }
+
+        public async Task<UserProfileDto?> GetUserProfileAsync(string userId)
+        {
+            // 1. Hämta användaren för att få e-post
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            { return null; }
+
+            // 2. Hämta all progress för denna användare
+            var userProgress = await _userProgressRepository.GetUserProgressByUserIdAsync(userId);
+
+            // Räkna hur många de faktiskt har klarat (IsCompleted == true)
+            int completedCount = userProgress.Count(p => p.IsCompleted);
+
+            // Hämta totala antalet subkategorier som finns i hela spelet
+            var allCategories = await _quizRepository.GetAllCategoriesWithSubCAsync();
+            int totalSubCategoriesCount = allCategories.SelectMany(c => c.SubCategories).Count();
+
+            // 3. Hämta användarens historik/poäng (Vi antar att din repository har en metod för detta)
+            var userScores = await _userScoreRepository.GetUserScoreByUserIdAsync(userId);
+
+            // 4. Bygg ihop hela paketet och skicka till UI!
+            var profile = new UserProfileDto
+            {
+                Email = user.Email,
+                CompletedSubCategories = completedCount,
+                TotalSubCategories = totalSubCategoriesCount,
+                TotalQuizzesPlayed = userScores.Count(),
+                TotalCorrectAnswers = userScores.Sum(s => s.Score),
+
+                // Mappa poängen till historik-DTO:n (sortera så nyaste ligger först)
+                RecentHistory = userScores.OrderByDescending(s => s.CompletedAt).Select(s => new QuizHistoryDto
+                {
+                    QuizName = "Quiz ID: " + s.QuizModelId, // Om du har namnet i databasen, hämta det istället
+                    Score = s.Score,
+                    TotalQuestions = s.TotalQuestions,
+                    CompletedAt = s.CompletedAt,
+                    Passed = ((double)s.Score / s.TotalQuestions) >= 0.8
+                }).ToList()
+            };
+
+            return profile;
         }
     }
 }

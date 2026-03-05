@@ -83,5 +83,36 @@ namespace MyCyberQuiz.BLL.Services
             }
             return new AuthResponseDto(false, "Registrering misslyckades", null);
         }
+
+        public async Task<AuthResponseDto> ChangePasswordAsync(string userId, ChangePasswordDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return new AuthResponseDto(false, "Användaren hittades inte.", null);
+
+            // Identity sköter all säkerhet och kollar så att CurrentPassword stämmer!
+            var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
+
+            if (result.Succeeded) return new AuthResponseDto(true, "Lösenordet har uppdaterats!", null);
+
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            return new AuthResponseDto(false, errors, null);
+        }
+
+        public async Task<AuthResponseDto> ChangeEmailAsync(string userId, ChangeEmailDto dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return new AuthResponseDto(false, "Användaren hittades inte.", null);
+
+            // Kolla så att den nya e-posten inte redan används av någon annan
+            var emailExists = await _userManager.FindByEmailAsync(dto.NewEmail);
+            if (emailExists != null && emailExists.Id != userId)
+                return new AuthResponseDto(false, "Denna e-postadress används redan av ett annat konto.", null);
+
+            // Ändra e-posten
+            await _userManager.SetEmailAsync(user, dto.NewEmail);
+            
+
+            return new AuthResponseDto(true, "E-postadressen har uppdaterats!", null);
+        }
     }
 }

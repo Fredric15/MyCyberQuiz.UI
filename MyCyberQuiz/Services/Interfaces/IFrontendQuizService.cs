@@ -1,5 +1,5 @@
 ﻿using MyCyberQuiz.Shared.DTOs;
-namespace MyCyberQuiz.UI.Services
+namespace MyCyberQuiz.UI.Services.Interfaces
 {
     public interface IFrontendQuizService
     {

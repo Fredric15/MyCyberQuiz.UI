@@ -9,6 +9,7 @@ namespace MyCyberQuiz.BLL.Interfaces
     {
         Task<AuthResponseDto> LoginAsync(LoginDto loginDto);
         Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto);
-
+        Task<AuthResponseDto> ChangePasswordAsync(string userId, ChangePasswordDto dto);
+        Task<AuthResponseDto> ChangeEmailAsync(string userId, ChangeEmailDto dto);
     }
 }

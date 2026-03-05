@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 using MyCyberQuiz.Shared.DTOs;
 using MyCyberQuiz.UI.Auth;
+using MyCyberQuiz.UI.Services.Interfaces;
 
 namespace MyCyberQuiz.UI.Services
 {

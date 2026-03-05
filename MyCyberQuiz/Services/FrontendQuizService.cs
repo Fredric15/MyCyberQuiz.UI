@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using MyCyberQuiz.Shared.DTOs;
+using MyCyberQuiz.UI.Services.Interfaces;
 using System.Net.Http.Headers;
 
 namespace MyCyberQuiz.UI.Services

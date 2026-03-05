@@ -2,13 +2,14 @@
 using Microsoft.AspNetCore.Mvc;
 using MyCyberQuiz.BLL.Interfaces;
 using MyCyberQuiz.Shared.DTOs;
+using System.Security.Claims;
 
 namespace MyCyberQuiz.API.Controllers
 {
     [Authorize] // Kräver att användaren är inloggad för att komma åt dessa endpoints
     [ApiController]
     [Route("api/[controller]")]
-    public class QuizController : Controller
+    public class QuizController : ControllerBase
     {
         private readonly IQuizService _quizService;
 
@@ -21,7 +22,8 @@ namespace MyCyberQuiz.API.Controllers
         [HttpGet("menu")]
         public async Task<ActionResult<IEnumerable<CategoryDto>>> GetMenuCategories()
         {
-            var menuData = await _quizService.GetMenuCategoriesAsync();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var menuData = await _quizService.GetMenuCategoriesAsync(userId);   
             return Ok(menuData);
         }
 
@@ -59,8 +61,9 @@ namespace MyCyberQuiz.API.Controllers
         {
             try
             {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 // Skickar DTO:n vidare till vår Service som gör hela rättningen
-                var result = await _quizService.SubmitQuizAsync(submission);
+                var result = await _quizService.SubmitQuizAsync(submission, userId);
 
                 return Ok(result); // Returnerar en 200 OK tillsammans med poängen
             }

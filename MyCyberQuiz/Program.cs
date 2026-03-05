@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using MyCyberQuiz.UI.Auth;
 using MyCyberQuiz.UI.Components;
 using MyCyberQuiz.UI.Services;
+using MyCyberQuiz.UI.Services.Interfaces;
 
 
 var builder = WebApplication.CreateBuilder(args);
