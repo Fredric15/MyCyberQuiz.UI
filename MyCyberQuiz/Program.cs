@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using MyCyberQuiz.UI.Auth;
 using MyCyberQuiz.UI.Components;
 using MyCyberQuiz.UI.Services;
+using MyCyberQuiz.UI.Services.Handlers;
 using MyCyberQuiz.UI.Services.Interfaces;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Registrera handlern
+//builder.Services.AddTransient<JwtAuthorizationMessageHandler>();
 //Registrera Auth-tjänsten och ge den en färdigkonfigurerad HttpClient
 //Detta ersätter också builder.Services.AddScoped<IFrontendAuthService, FrontendAuthService>();
 builder.Services.AddHttpClient<IFrontendAuthService, FrontendAuthService>(client =>
@@ -19,6 +22,12 @@ builder.Services.AddHttpClient<IFrontendQuizService, FrontendQuizService>(client
 {
     client.BaseAddress = new Uri("https://localhost:7256");
 });
+
+builder.Services.AddHttpClient<IFrontendProfileService, FrontendProfileService>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7256");
+});
+
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
