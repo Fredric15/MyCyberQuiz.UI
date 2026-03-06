@@ -3,6 +3,7 @@
 @using MyCyberQuiz.Shared.DTOs
 @using MyCyberQuiz.UI.Services.Interfaces
 @inject IFrontendProfileService ProfileService
+@inject NavigationManager NavigationManager
 
 <PageTitle>Min Profil</PageTitle>
 
@@ -19,6 +20,7 @@
     else if (userProfile == null)
     {
         <div class="alert alert-danger">Kunde inte ladda profilen. Är du inloggad?</div>
+        <button class="btn btn-primary" @onclick='() => NavigationManager.NavigateTo("/login")'>Gå till inloggning</button>
     }
     else
     {
@@ -203,4 +205,6 @@
             passwordDto = new ChangePasswordDto(); // Rensa formuläret så lösenorden försvinner från rutorna
         }
     }
+
+    
 }
