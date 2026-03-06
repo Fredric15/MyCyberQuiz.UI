@@ -1,0 +1,99 @@
+﻿@page "/profile"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using MyCyberQuiz.Shared.DTOs
+@using MyCyberQuiz.UI.Services.Interfaces
+@inject IFrontendProfileService ProfileService
+
+<PageTitle>Min Profil</PageTitle>
+
+<div class="container mt-5">
+    <h2>Min Profil</h2>
+    <hr />
+
+    @if (isLoading)
+    {
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Laddar...</span>
+        </div>
+    }
+    else if (userProfile == null)
+    {
+        <div class="alert alert-danger">Kunde inte ladda profilen. Är du inloggad?</div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">@userProfile.Email</h4>
+                        <p class="text-muted">Användare</p>
+
+                        <h5 class="mt-4">Kursens Progression</h5>
+                        <p class="mb-1">@userProfile.CompletedSubCategories av @userProfile.TotalSubCategories nivåer avklarade</p>
+
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                 role="progressbar"
+                                 style="width: @userProfile.ProgressPercentage%;"
+                                 aria-valuenow="@userProfile.ProgressPercentage"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                @userProfile.ProgressPercentage%
+                            </div>
+                        </div>
+
+                        <h5 class="mt-4">Statistik</h5>
+                        <ul>
+                            <li>Spelade quiz: <strong>@userProfile.TotalQuizzesPlayed</strong></li>
+                            <li>Totalt antal rätta svar: <strong>@userProfile.TotalCorrectAnswers</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">Senaste resultaten</h4>
+
+                        @if (userProfile.RecentHistory.Any())
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var history in userProfile.RecentHistory.Take(5))
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>@history.QuizName</strong><br />
+                                            <small class="text-muted">@history.CompletedAt.ToShortDateString()</small>
+                                        </div>
+                                        <span class="badge @(history.Passed ? "bg-success" : "bg-danger") rounded-pill">
+                                            @history.Score / @history.TotalQuestions rätt
+                                        </span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="text-muted">Du har inte spelat några quiz ännu.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    }
+</div>
+
+@code {
+    private UserProfileDto? userProfile;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Hämtar datan från din nya service!
+        userProfile = await ProfileService.GetProfileAsync();
+        isLoading = false;
+    }
+}
