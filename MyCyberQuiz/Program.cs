@@ -28,6 +28,10 @@ builder.Services.AddHttpClient<IFrontendProfileService, FrontendProfileService>(
     client.BaseAddress = new Uri("https://localhost:7256");
 });
 
+builder.Services.AddHttpClient<IFrontendAiChatService, FrontendAiChatService>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7256");
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

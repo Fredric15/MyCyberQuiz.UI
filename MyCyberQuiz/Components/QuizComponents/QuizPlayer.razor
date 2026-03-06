@@ -3,6 +3,7 @@
 @using MyCyberQuiz.UI.Services
 @using MyCyberQuiz.UI.Services.Interfaces
 @inject IFrontendQuizService FrontendQuizService
+@inject IFrontendAiChatService AiChatService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
@@ -78,8 +79,45 @@
                         else
                         {
                             <h5 class="mb-1"><i class="bi bi-x-circle-fill me-2"></i> Tyvärr, fel svar.</h5>
+                            <button class="btn btn-sm btn-light mt-2 text-danger fw-bold shadow-sm" @onclick="OpenAiChat">
+                                <i class="bi bi-robot"></i> Be AI-läraren förklara varför
+                            </button>
                         }
                     </div>
+
+                    @if (showAiChat && !isCorrect)
+                    {
+                        <div class="card border-info mt-3 shadow-sm text-dark">
+                            <div class="card-header bg-info text-white d-flex align-items-center">
+                                <span class="bi bi-robot me-2 fs-5"></span>
+                                <strong>AI-Lärare</strong>
+                            </div>
+                            <div class="card-body">
+
+                                @if (!string.IsNullOrEmpty(aiResponse))
+                                {
+                                    <div class="alert alert-light border mb-3">
+                                        @aiResponse
+                                    </div>
+                                }
+
+                                <div class="input-group">
+                                    <input type="text" class="form-control" @bind="aiUserMessage" placeholder="Ställ en fråga till AI:n..." disabled="@isAiLoading" />
+                                    <button class="btn btn-info text-white" @onclick="AskAiTeacher" disabled="@isAiLoading">
+                                        @if (isAiLoading)
+                                        {
+                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                            <span class="ms-1">Tänker...</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Skicka</span>
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 }
             </div>
             <div class="card-footer d-flex justify-content-end">
@@ -123,6 +161,12 @@
     // --- NYA VARIABLER FÖR FEEDBACK ---
     private bool hasAnsweredCurrent = false;
     private bool isCorrect = false;
+
+    // --- AI CHAT VARIABLER ---
+    private string aiUserMessage = "";
+    private string aiResponse = "";
+    private bool isAiLoading = false;
+    private bool showAiChat = false;
 
     // Sparar ID:t på rätt svar om användaren gissar fel, så vi kan visa vilket som var rätt
     private int? correctOptionIdFromServer;
@@ -235,6 +279,44 @@
         {
             Console.WriteLine($"Ett fel uppstod: {ex.Message}");
         }
+    }
+
+    // Metod för att visa chatten när man svarar fel (anropa denna när användaren gissar fel)
+    private void OpenAiChat()
+    {
+        showAiChat = true;
+        aiResponse = ""; // Rensa gamla svar
+        aiUserMessage = "Varför blev detta fel? Kan du förklara på ett enkelt sätt?"; // Förifyllt tips till användaren
+    }
+
+    // Metod som skickar frågan till AI:n
+    private async Task AskAiTeacher()
+    {
+        if (string.IsNullOrWhiteSpace(aiUserMessage)) return;
+
+        isAiLoading = true;
+
+        // Bygg ihop kontexten. Anpassa variablerna (t.ex. currentQuestion.Text) så de matchar hur din kod ser ut!
+        string context = $"Fråga: {currentQuestion.Text}.Användaren gissade fel. Rätt svar skulle ha varit: {correctAnswerTextFromServer}.";
+
+        var request = new AiChatRequestDto
+        {
+            UserQuestion = aiUserMessage,
+            QuestionContext = context
+        };
+
+        var result = await AiChatService.SendMessageAsync(request);
+
+        if (result.IsSuccessful)
+        {
+            aiResponse = result.Reply;
+        }
+        else
+        {
+            aiResponse = "Kunde inte få svar från AI:n. " + result.ErrorMessage;
+        }
+
+        isAiLoading = false;
     }
 
 }

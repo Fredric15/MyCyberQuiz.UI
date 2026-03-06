@@ -52,7 +52,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Berättar för .NET att fylla JwtSettings-klassen med datan från "Jwt"-blocket i appsettings.json
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddHttpClient<IAiChatService, AiChatService>();
 
 // Lägg till Identity-systemet (som ger dig UserManager, SignInManager osv)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
