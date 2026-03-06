@@ -1,0 +1,12 @@
+﻿@page "/logout"
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage SessionStorage
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await SessionStorage.DeleteAsync("authToken");
+        NavigationManager.NavigateTo("/login", true);
+    }
+}

@@ -237,7 +237,7 @@ namespace MyCyberQuiz.BLL.Services
 
         public async Task<UserProfileDto?> GetUserProfileAsync(string userId)
         {
-            // 1. Hämta användaren för att få e-post
+            // 1. Hämta användaren för att kunna visa upp e-post
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             { return null; }
@@ -252,7 +252,7 @@ namespace MyCyberQuiz.BLL.Services
             var allCategories = await _quizRepository.GetAllCategoriesWithSubCAsync();
             int totalSubCategoriesCount = allCategories.SelectMany(c => c.SubCategories).Count();
 
-            // 3. Hämta användarens historik/poäng (Vi antar att din repository har en metod för detta)
+            // 3. Hämta användarens historik/poäng)
             var userScores = await _userScoreRepository.GetUserScoreByUserIdAsync(userId);
 
             // 4. Bygg ihop hela paketet och skicka till UI!
@@ -267,7 +267,7 @@ namespace MyCyberQuiz.BLL.Services
                 // Mappa poängen till historik-DTO:n (sortera så nyaste ligger först)
                 RecentHistory = userScores.OrderByDescending(s => s.CompletedAt).Select(s => new QuizHistoryDto
                 {
-                    QuizName = "Quiz ID: " + s.QuizModelId, // Om du har namnet i databasen, hämta det istället
+                    QuizName = "Quiz ID: " + s.Quiz.Text,
                     Score = s.Score,
                     TotalQuestions = s.TotalQuestions,
                     CompletedAt = s.CompletedAt,

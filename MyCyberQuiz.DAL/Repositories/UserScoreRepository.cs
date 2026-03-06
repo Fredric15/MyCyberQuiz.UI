@@ -24,6 +24,7 @@ namespace MyCyberQuiz.DAL.Repositories
             // Hämtar alla UserScore-objekt som matchar det angivna userId och returnerar dem som en lista
             // Detta används för att visa användarens poäng i olika quiz
             return await _context.UserScores
+                .Include(us => us.Quiz) // Inkluderar relaterad Quiz-information för att kunna visa quiznamn eller andra detaljer
                 .Where(us => us.ApplicationUserId == userId)
                 .ToListAsync();
         }

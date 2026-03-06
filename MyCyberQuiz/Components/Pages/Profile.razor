@@ -82,18 +82,125 @@
                 </div>
             </div>
         </div>
+        <h3 class="mt-5 mb-3">Inställningar</h3>
+        <div class="row">
 
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Byt E-postadress</h5>
+
+                        <EditForm Model="emailDto" OnValidSubmit="HandleChangeEmail">
+                            <DataAnnotationsValidator />
+
+                            <div class="mb-3 mt-3">
+                                <label class="form-label">Ny E-postadress</label>
+                                <InputText @bind-Value="emailDto.NewEmail" class="form-control" type="email" placeholder="Din nya adress..." />
+                                <ValidationMessage For="@(() => emailDto.NewEmail)" class="text-danger" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">Uppdatera E-post</button>
+                        </EditForm>
+
+                        @if (!string.IsNullOrEmpty(emailMessage))
+                        {
+                            <div class="alert mt-3 @(isEmailSuccess ? "alert-success" : "alert-danger")">
+                                @emailMessage
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Byt Lösenord</h5>
+
+                        <EditForm Model="passwordDto" OnValidSubmit="HandleChangePassword">
+                            <DataAnnotationsValidator />
+
+                            <div class="mb-3 mt-3">
+                                <label class="form-label">Nuvarande lösenord</label>
+                                <InputText @bind-Value="passwordDto.CurrentPassword" class="form-control" type="password" />
+                                <ValidationMessage For="@(() => passwordDto.CurrentPassword)" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Nytt lösenord</label>
+                                <InputText @bind-Value="passwordDto.NewPassword" class="form-control" type="password" />
+                                <ValidationMessage For="@(() => passwordDto.NewPassword)" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Bekräfta nytt lösenord</label>
+                                <InputText @bind-Value="passwordDto.ConfirmNewPassword" class="form-control" type="password" />
+                                <ValidationMessage For="@(() => passwordDto.ConfirmNewPassword)" class="text-danger" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">Byt Lösenord</button>
+                        </EditForm>
+
+                        @if (!string.IsNullOrEmpty(passwordMessage))
+                        {
+                            <div class="alert mt-3 @(isPasswordSuccess ? "alert-success" : "alert-danger")">
+                                @passwordMessage
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+        </div>
     }
 </div>
 
 @code {
     private UserProfileDto? userProfile;
     private bool isLoading = true;
+    private ChangeEmailDto emailDto = new();
+    private ChangePasswordDto passwordDto = new();
+
+    // Variabler för meddelanden (gröna eller röda rutor)
+    private string emailMessage = "";
+    private bool isEmailSuccess;
+
+    private string passwordMessage = "";
+    private bool isPasswordSuccess;
 
     protected override async Task OnInitializedAsync()
     {
         // Hämtar datan från din nya service!
         userProfile = await ProfileService.GetProfileAsync();
         isLoading = false;
+    }
+
+    // Metod för att byta E-post
+    private async Task HandleChangeEmail()
+    {
+        emailMessage = ""; // Rensa gamla meddelanden
+        var result = await ProfileService.ChangeEmailAsync(emailDto);
+        isEmailSuccess = result.IsSuccessful;
+        emailMessage = result.ErrorMessage ?? (isEmailSuccess ? "Din e-post har uppdaterats!" : "Ett fel uppstod.");
+
+        if (isEmailSuccess)
+        {
+            emailDto = new ChangeEmailDto(); // Rensa formuläret
+            userProfile = await ProfileService.GetProfileAsync(); // Ladda om profilen så nya e-posten syns direkt
+        }
+    }
+
+    // Metod för att byta Lösenord
+    private async Task HandleChangePassword()
+    {
+        passwordMessage = ""; // Rensa gamla meddelanden
+        var result = await ProfileService.ChangePasswordAsync(passwordDto);
+        isPasswordSuccess = result.IsSuccessful;
+        passwordMessage = result.ErrorMessage ?? (isPasswordSuccess ? "Ditt lösenord har ändrats!" : "Ett fel uppstod.");
+
+        if (isPasswordSuccess)
+        {
+            passwordDto = new ChangePasswordDto(); // Rensa formuläret så lösenorden försvinner från rutorna
+        }
     }
 }
