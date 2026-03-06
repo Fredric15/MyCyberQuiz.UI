@@ -87,32 +87,56 @@
 
                     @if (showAiChat && !isCorrect)
                     {
-                        <div class="card border-info mt-3 shadow-sm text-dark">
-                            <div class="card-header bg-info text-white d-flex align-items-center">
-                                <span class="bi bi-robot me-2 fs-5"></span>
-                                <strong>AI-Lärare</strong>
+                        <div class="card border-info mt-4 shadow text-dark overflow-hidden rounded-4">
+                            <div class="card-header bg-gradient bg-info text-white d-flex align-items-center justify-content-between p-3">
+                                <div>
+                                    <i class="bi bi-robot me-2 fs-5"></i>
+                                    <strong class="fs-5">AI-Läraren</strong>
+                                </div>
+                                <button class="btn-close btn-close-white" @onclick="() => showAiChat = false" aria-label="Close"></button>
                             </div>
-                            <div class="card-body">
 
-                                @if (!string.IsNullOrEmpty(aiResponse))
-                                {
-                                    <div class="alert alert-light border mb-3">
-                                        @aiResponse
+                            <div class="card-body bg-light" style="min-height: 180px;">
+                                <div class="d-flex align-items-start mb-3">
+                                    <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm flex-shrink-0" style="width: 45px; height: 45px;">
+                                        <i class="bi bi-robot fs-4"></i>
                                     </div>
-                                }
 
-                                <div class="input-group">
-                                    <input type="text" class="form-control" @bind="aiUserMessage" placeholder="Ställ en fråga till AI:n..." disabled="@isAiLoading" />
-                                    <button class="btn btn-info text-white" @onclick="AskAiTeacher" disabled="@isAiLoading">
+                                    <div class="bg-white border border-info-subtle rounded-3 py-3 px-4 shadow-sm" style="max-width: 85%; border-top-left-radius: 0 !important;">
                                         @if (isAiLoading)
                                         {
-                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                            <span class="ms-1">Tänker...</span>
+                                            <div class="text-info d-flex align-items-center gap-1" style="height: 24px;">
+                                                <span class="spinner-grow spinner-grow-sm" role="status" style="animation-delay: 0s;"></span>
+                                                <span class="spinner-grow spinner-grow-sm" role="status" style="animation-delay: 0.2s;"></span>
+                                                <span class="spinner-grow spinner-grow-sm" role="status" style="animation-delay: 0.4s;"></span>
+                                            </div>
+                                        }
+                                        else if (string.IsNullOrEmpty(aiResponse))
+                                        {
+                                            <span class="text-muted">
+                                                Hej! Jag ser att förra frågan var lite klurig. Fråga mig vad du vill så hjälper jag dig att förstå varför det blev fel! 👋
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span>Skicka</span>
+                                            <span>@aiResponse</span>
                                         }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-footer bg-white p-3">
+                                <div class="input-group input-group-lg shadow-sm rounded-3">
+                                    <input type="text" class="form-control border-info-subtle fs-6"
+                                           @bind="aiUserMessage"
+                                           @bind:event="oninput"
+                                           @onkeyup="HandleEnterKey"
+                                           placeholder="Skriv din fråga här..."
+                                           disabled="@isAiLoading" />
+                                    <button class="btn btn-info text-white px-4"
+                                            @onclick="AskAiTeacher"
+                                            disabled="@(isAiLoading || string.IsNullOrWhiteSpace(aiUserMessage))">
+                                        <i class="bi bi-send-fill fs-5"></i>
                                     </button>
                                 </div>
                             </div>
@@ -305,6 +329,8 @@
             QuestionContext = context
         };
 
+        aiUserMessage = "";
+
         var result = await AiChatService.SendMessageAsync(request);
 
         if (result.IsSuccessful)
@@ -319,4 +345,12 @@
         isAiLoading = false;
     }
 
+    // Låter användaren skicka frågan genom att trycka på Enter-tangenten
+    private async Task HandleEnterKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !isAiLoading && !string.IsNullOrWhiteSpace(aiUserMessage))
+        {
+            await AskAiTeacher();
+        }
+    }
 }
