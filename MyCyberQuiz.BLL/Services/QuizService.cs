@@ -62,12 +62,15 @@ namespace MyCyberQuiz.BLL.Services
                         isLocked = false;
                     }
 
+                    bool isCompleted = userProgress.Any(p => p.SubCategoryModelId == sc.Id && p.IsCompleted);
+
                     subCategoryDtos.Add(new SubCategoryDto(
                         sc.Id,
                         sc.Name,
                         sc.Description,
                         isLocked,
-                        sc.Order
+                        sc.Order,
+                        isCompleted
                     ));
                 }
 

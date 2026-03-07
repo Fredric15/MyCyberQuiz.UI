@@ -19,18 +19,9 @@ namespace MyCyberQuiz.UI.Services
         {
             try
             {
-                // 1. Leta fram passerkortet (Token) från minnet
-                var tokenResult = await _sessionStorage.GetAsync<string>("authToken");
+                await SetAuthorizationHeaderAsync(); // Använd hjälpmetoden för att sätta headern
 
-                if (tokenResult.Success && !string.IsNullOrWhiteSpace(tokenResult.Value))
-                {
-                    // 2. Sätt fast tokenen på HttpClient:en (Detta är kod-motsvarigheten till hänglåset i Swagger!)
-                    _httpClient.DefaultRequestHeaders.Authorization =
-                        new AuthenticationHeaderValue("Bearer", tokenResult.Value);
-                }
-
-                // 3. Gör anropet till API:et
-                var response = await _httpClient.GetAsync("api/Quiz/menu"); // Byt till din exakta endpoint
+                var response = await _httpClient.GetAsync("api/Quiz/menu");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -38,8 +29,8 @@ namespace MyCyberQuiz.UI.Services
                     return await response.Content.ReadFromJsonAsync<List<CategoryDto>>();
                 }
 
-                // Om vi t.ex. får 401 Unauthorized (token har gått ut)
-                return new List<CategoryDto>();
+            // Om vi t.ex. får 401 Unauthorized (token har gått ut)
+            return new List<CategoryDto>();
             }
             catch
             {
@@ -50,13 +41,7 @@ namespace MyCyberQuiz.UI.Services
         public async Task<QuizDetailsDto?> GetQuizByIdAsync(int id)
         {
 
-            var tokenResult = await _sessionStorage.GetAsync<string>("authToken");
-
-            if (tokenResult.Success && !string.IsNullOrWhiteSpace(tokenResult.Value))
-            {
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", tokenResult.Value);
-            }
+            await SetAuthorizationHeaderAsync(); // Använd hjälpmetoden för att sätta headern
 
             var response = await _httpClient.GetAsync($"api/Quiz/{id}");
 
@@ -71,13 +56,8 @@ namespace MyCyberQuiz.UI.Services
 
         public async Task<QuizResultDto?> SubmitQuizAsync(SubmitQuizDto submission)
         {
-            var tokenResult = await _sessionStorage.GetAsync<string>("authToken");
-
-            if (tokenResult.Success && !string.IsNullOrWhiteSpace(tokenResult.Value))
-            {
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", tokenResult.Value);
-            }
+            
+            await SetAuthorizationHeaderAsync(); // Använd hjälpmetoden för att sätta headern
 
             var response = await _httpClient.PostAsJsonAsync("api/Quiz/submit", submission);
 
@@ -91,11 +71,29 @@ namespace MyCyberQuiz.UI.Services
 
         public async Task<AnswerFeedbackDto> CheckSingleAnswerAsync(int questionId, int selectedOptionId)
         {
+            await SetAuthorizationHeaderAsync();
             // Ropa på din nya endpoint i API:et!
             var response = await _httpClient.GetFromJsonAsync<AnswerFeedbackDto>(
                 $"api/quiz/question/{questionId}/check/{selectedOptionId}");
 
             return response ?? new AnswerFeedbackDto(false, 0, "Kunde inte hämta svar");
+        }
+
+        // Hjälpmetod för att hämta token och lägga i headern
+        private async Task SetAuthorizationHeaderAsync()
+        {
+            try
+            {
+                var tokenResult = await _sessionStorage.GetAsync<string>("authToken");
+                if (tokenResult.Success && !string.IsNullOrEmpty(tokenResult.Value))
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResult.Value);
+                }
+            }
+            catch
+            {
+                // Fångar upp felet om detta anropas för tidigt i prerendering-fasen
+            }
         }
     }
 }

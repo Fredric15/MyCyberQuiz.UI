@@ -74,7 +74,7 @@ namespace MyCyberQuiz.UI.Services
             return errorResult ?? new AuthResponseDto(false, "Kunde inte byta e-post.", null);
         }
 
-        // --- Hjälpmetod för att hämta token och lägga i headern ---
+        // Hjälpmetod för att hämta token och lägga i headern
         private async Task SetAuthorizationHeaderAsync()
         {
             try

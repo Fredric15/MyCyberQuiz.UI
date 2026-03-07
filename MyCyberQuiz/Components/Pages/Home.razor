@@ -48,30 +48,42 @@
                                 @* Inre loop: Loopar igenom underkategorierna för den aktuella kategorin *@
                                 @foreach (var subCategory in category.SubCategories)
                                 {
-                                    <div class="col-md-4">
-                                        <div class="card h-100 border-0 shadow-sm hover-effect">
-                                            <div class="card-body d-flex flex-column">
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card h-100 shadow-sm hover-effect @(subCategory.IsCompleted ? "border border-success border-2" : (subCategory.IsLocked ? "border border-secondary opacity-75" : "border border-primary"))">
 
-                                                @if (subCategory.IsLocked)
-                                                {
-                                                    <h5 class="card-title text-muted">
-                                                        <i class="bi bi-lock-fill text-secondary me-2"></i> @subCategory.Name
-                                                    </h5>
-                                                    <button class="btn btn-secondary mt-auto" disabled>
-                                                        Låst
+                                            <div class="card-body d-flex flex-column">
+                                                <h5 class="card-title d-flex justify-content-between align-items-center @(subCategory.IsLocked ? "text-muted" : "text-dark")">
+                                                    @subCategory.Name
+
+                                                    @if (subCategory.IsCompleted)
+                                                    {
+                                                        <i class="bi bi-check-circle-fill text-success fs-4" title="Avklarat!"></i>
+                                                    }
+                                                    else if (subCategory.IsLocked)
+                                                    {
+                                                        <i class="bi bi-lock-fill text-secondary fs-5" title="Låst"></i>
+                                                    }
+                                                </h5>
+
+                                                <div class="mt-auto pt-3">
+                                                    <button class="btn w-100 @(subCategory.IsCompleted ? "btn-outline-success fw-bold" : (subCategory.IsLocked ? "btn-secondary" : "btn-primary shadow-sm"))"
+                                                            disabled="@subCategory.IsLocked"
+                                                            @onclick="() => StartQuiz(subCategory.Id)">
+
+                                                        @if (subCategory.IsLocked)
+                                                        {
+                                                            <span><i class="bi bi-lock me-1"></i> Låst</span>
+                                                        }
+                                                        else if (subCategory.IsCompleted)
+                                                        {
+                                                            <span><i class="bi bi-arrow-repeat me-1"></i> Spela igen</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span><i class="bi bi-play-circle-fill me-1"></i> Starta Quiz</span>
+                                                        }
                                                     </button>
-                                                }
-                                                else
-                                                {
-                                                    <h5 class="card-title text-primary">@subCategory.Name</h5>
-                                                    <button class="btn btn-outline-primary mt-auto" @onclick="() => StartQuiz(subCategory.Id)">
-                                                        <i class="bi bi-play-circle me-2"></i> Starta Quiz
-                                                    </button>
-                                                }
-                                                @* <h5 class="card-title text-primary">@subCategory.Name</h5>
-                                                <button class="btn btn-outline-primary mt-auto" @onclick="() => StartQuiz(subCategory.Id)">
-                                                    <i class="bi bi-play-circle me-2"></i> Starta Quiz
-                                                </button> *@
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

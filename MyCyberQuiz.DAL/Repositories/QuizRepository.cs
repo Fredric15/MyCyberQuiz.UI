@@ -35,8 +35,8 @@ namespace MyCyberQuiz.DAL.Repositories
 
             // 2. Leta upp nästa underkategori i samma huvudkategori (den som har ett högre ID)
             var nextSubCategory = await _context.SubCategories
-                .Where(sc => sc.CategoryModelId == currentSubCategory.CategoryModelId && sc.Id > currentSubCategoryId)
-                .OrderBy(sc => sc.Id) // Sortera så vi garanterat får den som ligger precis efter
+                .Where(sc => sc.CategoryModelId == currentSubCategory.CategoryModelId && sc.Order > currentSubCategory.Order)
+                .OrderBy(sc => sc.Order) // Sortera så vi garanterat får den som ligger precis efter
                 .FirstOrDefaultAsync();
 
             return nextSubCategory?.Id;
